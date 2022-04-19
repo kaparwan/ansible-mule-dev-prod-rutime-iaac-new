@@ -1,0 +1,6 @@
+---
+# file: group_vars/all
+ntp: ntp-au.example.com
+proxy_env:
+  http_proxy: http://proxy.bos.example.com:8080
+  https_proxy: http://proxy.bos.example.com:8080 

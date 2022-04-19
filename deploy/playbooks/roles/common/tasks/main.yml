@@ -1,0 +1,102 @@
+#---
+# tasks file for common
+
+- name: Update all Ubuntu packages
+  apt:
+    upgrade: "dist"
+  when: ansible_distribution == 'Ubuntu'
+  
+- name: Install Java 8 and mvn 
+  apt:
+    name: "{{ packages }}"
+    update_cache: yes
+    state: present
+  with_items: "{{ packages }}"
+  vars:
+    packages:
+      - openjdk-8-jdk
+      - maven
+
+
+- name: check java is installed
+  package:
+    name: openjdk-8-jdk
+    state: present
+
+- name: check  unzip package installed
+  package:
+    name: unzip
+    state: latest
+
+
+- name: Install aptitude using apt
+  apt: 
+    name=aptitude 
+    state=latest 
+    update_cache=yes 
+    force_apt_get=yes
+
+- name: Install required system packages
+  apt: 
+    name={{ item }} 
+    state=latest 
+    update_cache=yes
+    force_apt_get=yes
+  loop: 
+    [ 'apt-transport-https', 'ca-certificates', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools', 'jq']
+
+# - name: Add Docker GPG apt Key
+#   apt_key:
+#     url: https://download.docker.com/linux/ubuntu/gpg
+#     state: present
+
+# - name: Add Docker Repository
+#   apt_repository:
+#     repo: deb https://download.docker.com/linux/ubuntu bionic stable
+#     state: present
+
+# - name: Update apt and install docker-ce
+#   apt: 
+#     update_cache=yes 
+#     name=docker-ce 
+#     state=latest
+
+# - name: Install Docker Module for Python
+#   pip:
+#     name: docker
+
+# #usermod -aG docker $USER
+
+# - name: add to docker group - user vagrant  
+#   ansible.builtin.shell:
+#     cmd: usermod -aG docker vagrant
+
+
+
+#nodejs install pre for anypoint-cli  
+
+- name: Install the gpg key for nodejs LTS
+  apt_key:
+    url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+    state: present
+
+- name: Install the nodejs LTS repos
+  apt_repository:
+    repo: "deb https://deb.nodesource.com/node_8.x xenial main" # TBD - dynamic "lsb_release -s -c"
+    state: present
+    update_cache: yes
+
+- name: Install the nodejs
+  apt:
+     name: nodejs
+     state: present
+
+
+
+
+# install anypoint-cli 
+
+
+- name: npm install  anypoint cli 
+  ansible.builtin.shell:
+    cmd: npm install -g anypoint-cli@latest

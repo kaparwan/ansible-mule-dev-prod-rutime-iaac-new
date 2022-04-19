@@ -1,0 +1,57 @@
+---
+# tasks file for jenkins
+ 
+
+ # ADD Jenkins as  a linux service ... 
+
+- name: runs jekin setup only when jenkins-exists.txt  doesn't exist
+  ansible.builtin.shell: |
+    wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add 
+    sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+    sudo apt update 
+    sudo apt install jenkins 
+    sudo systemctl start jenkins 
+    sudo ufw allow 8080  # optional
+
+    # fix for deployment to succeed in local runtime.  
+    sudo echo  "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+ 
+    touch  jenkins-exists.txt
+    exit 0
+  args:
+    creates: jenkins-exists.txt
+
+
+#  to be added in version 2 
+
+- name: JENKINS-PASSTOKEN | Get initial authentication token
+  shell: 'sudo cat /var/lib/jenkins/secrets/initialAdminPassword'
+  register: admin_auth_token
+
+- name: JENKINS-CTEDENTIALS | Create CRUMB authentication request
+  uri:
+    url: 'http://localhost:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+    user: admin
+    password: '{{ admin_auth_token.stdout }}'
+    force_basic_auth: yes
+    return_content: yes
+  register: crumb
+
+- name: JENKINS-CTEDENTIALS | Add Jenkins administration account
+  vars:
+    jenkins_user: jenkins
+    jenkins_pass: jenkins
+    
+  uri:
+    method: POST
+    url: 'http://localhost:8080/securityRealm/createAccountByAdmin'
+    user: admin
+    password: '{{ admin_auth_token.stdout }}'
+    force_basic_auth: yes
+    follow_redirects: all
+    headers:
+      Jenkins-Crumb: '{{ crumb.content.split(":")[1] }}'
+      Cookie: '{{ crumb.set_cookie }}'
+    # body: 'username=user2&password1=pass&password2=pass&fullname=fullname&email=bubba%40dummy.bg'
+    body: 'username={{jenkins_user}}&password1={{jenkins_pass}}&password2={{jenkins_pass}}&fullname=jenkins&email=jenkins@jenkins'
+

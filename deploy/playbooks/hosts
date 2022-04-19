@@ -1,0 +1,6 @@
+# split into production and staging, and use the -i flag when running ansible to specify an inventory file.
+[mule-host]
+mule-runtime-ansible
+
+[dbservers]
+localhost

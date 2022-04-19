@@ -1,0 +1,42 @@
+---
+# tasks file for mule-runtime-deploy
+
+
+# check tbd if docker is running 
+
+- name: copy runtime # enahnce this module to get binary through CLI and add {{with_items}} also wait .. depdendency and Checksum 
+  unarchive:
+    src: /Users/manoj.kaparwan/bin//mule-ee-distribution-standalone-4.4.0.zip # add var section 
+    dest: /opt
+    mode: 0755 
+    owner: vagrant
+    group: vagrant    
+    #remote_src: yes
+    list_files: yes
+    creates: /tmp/dummy
+
+  register: archive_contents    
+
+- name: create 'mule' symlink to current Mule version 
+  file:
+    src: /opt/mule-enterprise-standalone-4.4.0
+    dest: /opt/mule
+    owner: root
+    group: root
+    state: link
+
+- name: set mule home mule base 
+  shell: "echo $MULE_BASE"
+  environment: 
+      MULE_BASE: /opt/mule
+      MULE_HOME: /opt/mule
+  register: setmulehome
+
+- name: mule service install into systemd service  # change restart to  start If not  exists ->  /opt/mule/mule_ee.pid then 
+  ansible.builtin.shell:
+    cmd: sudo /opt/mule/bin/mule restart
+    creates: /opt/mule/some-file.txt
+ 
+
+
+

@@ -1,0 +1,49 @@
+servers=[
+  {
+    :hostname => "mule-runtime-develop",
+    :ip => "192.168.56.10",  
+    :box => "ubuntu/xenial64",
+    #:box => "bento/ubuntu-20.04",
+    :memory => 2048,
+    :cpus => 2
+   }, 
+  {
+    :hostname => "mule-runtime-production",
+    :ip => "192.168.56.11",  
+    :box => "ubuntu/xenial64",
+    :memory => 2048,
+    :cpus => 2
+  }
+]
+
+Vagrant.configure("2") do |config|
+  servers.each do |machine|
+    config.vm.box =  machine[:box]
+
+    config.vm.provision "shell", path: "swap-on.sh"
+
+      config.vm.provider "virtualbox" do |vb|
+        vb.cpus = machine[:cpus]
+        vb.memory = machine[:memory]
+      end
+      
+              config.vm.define machine[:hostname] do |node|
+                node.vm.network "private_network", ip: machine[:ip]
+                node.vm.box = machine[:box]
+                node.vm.hostname = machine[:hostname]
+              end 
+
+                      config.vm.provision "shell", inline: <<-BLOCK
+                        sudo apt-add-repository ppa:ansible/ansible -y
+                        sudo apt update
+                        sudo apt install ansible -y
+                        ansible --version
+                        BLOCK
+
+                        config.vm.provision "ansible" , :run => 'always' do |ans|
+                        ans.playbook = "playbooks/site.yml"
+                      end
+  end
+end
+
+

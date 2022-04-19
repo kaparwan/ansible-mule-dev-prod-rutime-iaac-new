@@ -1,0 +1,6 @@
+---
+# handlers file for mule-runtime-deploy
+- name: restart mule service
+  service:
+    name: mule
+    state: restarted
